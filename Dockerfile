@@ -1,28 +1,52 @@
-FROM nvcr.io/nvidia/tensorflow:20.07-tf1-py3
+FROM nvcr.io/nvidia/tensorflow:20.07-tf1-py3 as builder
 
 ENV LANG=C.UTF-8
-
 RUN apt-get -y update && apt-get -y upgrade
-
 RUN ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y \
+COPY packages .
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install \
 emacs-nox \
 git \
 wget \
 $(cat packages)
 
-ARG ROOT_BIN=root_v6.22.00.Linux-ubuntu18-x86_64-gcc7.5.tar.gz
+RUN git clone --branch v6-20-00-patches https://github.com/root-project/root.git root_src \
+&& mkdir root_build root && cd root_build \
+&& cmake -Dpython3="ON" -DPYTHON_EXECUTABLE="/usr/bin/python" -Dlibcxx="ON" -Dmathmore="ON" -Dminuit2="ON" -Droofit="ON" -Dtmva="ON" -DCMAKE_INSTALL_PREFIX=../root ../root_src \
+&& cmake --build . -- install -j `nproc` 
 
-COPY packages packages
+# ARG ROOT_BIN=root_v6.22.00.Linux-ubuntu18-x86_64-gcc7.5.tar.gz
+# RUN wget https://root.cern/download/${ROOT_BIN} \
+# && tar -xzvf ${ROOT_BIN} \
+# && rm -f ${ROOT_BIN} \
+# && echo /workspace/root/lib >> /etc/ld.so.conf \
+# && ldconfig
 
-RUN wget https://root.cern/download/${ROOT_BIN} \
-&& tar -xzvf ${ROOT_BIN} \
-&& rm -f ${ROOT_BIN} \
-&& echo /opt/root/lib >> /etc/ld.so.conf \
-&& ldconfig
+# ENV ROOTSYS /workspace/root
+# ENV PATH $ROOTSYS/bin:$PATH
+# ENV PYTHONPATH $ROOTSYS/lib:$PYTHONPATH
+# ENV CLING_STANDARD_PCH none
 
-ENV ROOTSYS /opt/root
-ENV PATH $ROOTSYS/bin:$PATH
-ENV PYTHONPATH $ROOTSYS/lib:$PYTHONPATH
-ENV CLING_STANDARD_PCH none
+FROM nvcr.io/nvidia/tensorflow:20.07-tf1-py3
+
+ENV LANG=C.UTF-8
+RUN apt-get -y update && apt-get -y upgrade
+RUN ln -sf /usr/share/zoneinfo/UTC /etc/localtime
+
+COPY packages .
+
+RUN DEBIAN_FRONTEND=noninteractive apt-get -y install \
+emacs-nox \
+git \
+wget \
+$(cat packages)
+
+COPY --from=builder /workspace/root /workspace/root
+COPY entry-point.sh /entry-point.sh
+
+RUN pwd && ls && ls /
+
+ENTRYPOINT ["/entry-point.sh"]
+CMD ["/bin/bash"]
