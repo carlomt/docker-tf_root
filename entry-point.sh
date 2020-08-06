@@ -1,6 +1,5 @@
-#!/bin/sh
+#!/bin/bash
 set -e
-
-source /workspace/root/bin/thisroot.sh 
-
+. /opt/root/bin/thisroot.sh 
+. /opt/set-aliases.sh
 exec "$@"
