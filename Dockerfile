@@ -43,10 +43,11 @@ git \
 wget \
 $(cat packages)
 
+RUN /usr/bin/python -m pip install --upgrade pip
+RUN /usr/bin/python -m pip install root_numpy keras==2.3.1
+
 COPY --from=builder /workspace/root /workspace/root
 COPY entry-point.sh /entry-point.sh
-
-RUN pwd && ls && ls /
 
 ENTRYPOINT ["/entry-point.sh"]
 CMD ["/bin/bash"]
