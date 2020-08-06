@@ -1,5 +1,5 @@
 # FROM nvcr.io/nvidia/tensorflow:20.07-tf1-py3 as builder
-FROM nvcr.io/nvidia/tensorflow as builder
+FROM nvcr.io/nvidia/tensorflow:20.03-tf2-py3 as builder
 
 ENV LANG=C.UTF-8
 RUN apt-get -y update && apt-get -y upgrade
@@ -30,7 +30,7 @@ RUN git clone --branch v6-22-00-patches https://github.com/root-project/root.git
 # ENV PYTHONPATH $ROOTSYS/lib:$PYTHONPATH
 # ENV CLING_STANDARD_PCH none
 
-FROM nvcr.io/nvidia/tensorflow
+FROM nvcr.io/nvidia/tensorflow:20.03-tf2-py3
 
 ENV LANG=C.UTF-8
 RUN apt-get -y update && apt-get -y upgrade
