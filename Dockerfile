@@ -1,4 +1,5 @@
-FROM nvcr.io/nvidia/tensorflow:20.07-tf1-py3 as builder
+# FROM nvcr.io/nvidia/tensorflow:20.07-tf1-py3 as builder
+FROM nvcr.io/nvidia/tensorflow as builder
 
 ENV LANG=C.UTF-8
 RUN apt-get -y update && apt-get -y upgrade
@@ -12,7 +13,7 @@ git \
 wget \
 $(cat packages)
 
-RUN git clone --branch v6-20-00-patches https://github.com/root-project/root.git root_src \
+RUN git clone --branch v6-22-00-patches https://github.com/root-project/root.git root_src \
 && mkdir root_build root && cd root_build \
 && cmake -Dpython3="ON" -DPYTHON_EXECUTABLE="/usr/bin/python" -Dlibcxx="ON" -Dmathmore="ON" -Dminuit2="ON" -Droofit="ON" -Dtmva="ON" -DCMAKE_INSTALL_PREFIX=../root ../root_src \
 && cmake --build . -- install -j `nproc` 
@@ -29,7 +30,7 @@ RUN git clone --branch v6-20-00-patches https://github.com/root-project/root.git
 # ENV PYTHONPATH $ROOTSYS/lib:$PYTHONPATH
 # ENV CLING_STANDARD_PCH none
 
-FROM nvcr.io/nvidia/tensorflow:20.07-tf1-py3
+FROM nvcr.io/nvidia/tensorflow
 
 ENV LANG=C.UTF-8
 RUN apt-get -y update && apt-get -y upgrade
@@ -44,7 +45,7 @@ wget \
 $(cat packages)
 
 RUN /usr/bin/python -m pip install --upgrade pip
-RUN /usr/bin/python -m pip install root_numpy keras==2.3.1
+RUN /usr/bin/python -m pip install root_numpy
 
 COPY --from=builder /workspace/root /workspace/root
 COPY entry-point.sh /entry-point.sh
