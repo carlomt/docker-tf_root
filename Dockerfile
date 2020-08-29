@@ -5,16 +5,19 @@ FROM tensorflow/tensorflow:2.2.0-gpu as builder
 WORKDIR /workspace
 
 ENV LANG=C.UTF-8
-RUN apt-get -y update && apt-get -y upgrade
+# RUN apt-get -y update && apt-get -y upgrade
 RUN ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 
 COPY packages .
 
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install \
+RUN DEBIAN_FRONTEND=noninteractive \
+apt-get -y update && \
+apt-get -y install \
 emacs-nox \
 git \
 wget \
-$(cat packages)
+$(cat packages) \
+&& rm -rf /var/lib/apt/lists/*
 
 RUN git clone --branch v6-22-00-patches https://github.com/root-project/root.git root_src \
 && mkdir root_build root && cd root_build \
@@ -48,16 +51,19 @@ FROM tensorflow/tensorflow:2.2.0-gpu
 # WORKDIR /workspace
 
 ENV LANG=C.UTF-8
-RUN apt-get -y update && apt-get -y upgrade
+# RUN apt-get -y update && apt-get -y upgrade
 RUN ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 
 COPY packages .
 
-RUN DEBIAN_FRONTEND=noninteractive apt-get -y install \
+RUN DEBIAN_FRONTEND=noninteractive \
+apt-get -y update && \
+apt-get -y install \
 emacs-nox \
 git \
 wget \
-$(cat packages)
+$(cat packages) \
+&& rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /workspace/root /opt/root
 COPY entry-point.sh /opt/entry-point.sh
@@ -65,7 +71,7 @@ COPY set-aliases.sh /opt/set-aliases.sh
 # RUN chmod a+rwx /opt/entry-point.sh
 
 RUN /usr/local/bin/python -m pip install --upgrade pip
-RUN /usr/local/bin/python -m pip install matplotlib ipython
+RUN /usr/local/bin/python -m pip install matplotlib ipython jupyterlab
 RUN source /opt/root/bin/thisroot.sh && /usr/local/bin/python -m pip install root_numpy
 
 ENTRYPOINT ["/opt/entry-point.sh"]
