@@ -1,20 +1,23 @@
 # FROM nvcr.io/nvidia/tensorflow:20.07-tf1-py3 as builder
 # FROM nvcr.io/nvidia/tensorflow:20.03-tf2-py3 as builder
 # FROM tensorflow/tensorflow:2.2.0-gpu as builder
-FROM tensorflow/tensorflow:2.3.0-gpu as builder
+# FROM tensorflow/tensorflow:2.3.0-gpu as builder
+ARG BASE_IMAGE=tensorflow/tensorflow:2.3.0-gpu
+FROM $BASE_IMAGE AS builder
 
 WORKDIR /workspace
 
 ENV LANG=C.UTF-8
 RUN ln -sf /usr/share/zoneinfo/UTC /etc/localtime
+ENV DEBIAN_FRONTEND=noninteractive
 
 COPY packages .
 
-RUN DEBIAN_FRONTEND=noninteractive \
-apt-get -y update && \
-apt-get -y install \
+RUN apt-get update && \
+apt-get -yq --no-install-recommends install \
 git \
 $(cat packages) \
+&& apt-get clean \
 && rm -rf /var/lib/apt/lists/*
 
 RUN git clone --branch v6-22-00-patches https://github.com/root-project/root.git root_src \
@@ -36,7 +39,7 @@ RUN git clone --branch v6-22-00-patches https://github.com/root-project/root.git
 
 #######################################################################
 
-FROM tensorflow/tensorflow:2.3.0-gpu
+FROM $BASE_IMAGE
 # ARG USER_ID
 # ARG GROUP_ID
 
@@ -49,15 +52,18 @@ FROM tensorflow/tensorflow:2.3.0-gpu
 ENV LANG=C.UTF-8
 RUN ln -sf /usr/share/zoneinfo/UTC /etc/localtime
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 COPY packages .
 
-RUN DEBIAN_FRONTEND=noninteractive \
-apt-get -y update && \
-apt-get -y install \
-emacs-nox \
+RUN apt-get update && \
+apt-get -yq --no-install-recommends install \
 git \
+emacs-nox \
 wget \
+python3-pygraphviz \
 $(cat packages) \
+&& apt-get clean \
 && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /workspace/root /opt/root
@@ -65,9 +71,13 @@ COPY entry-point.sh /opt/entry-point.sh
 COPY set-aliases.sh /opt/set-aliases.sh
 # RUN chmod a+rwx /opt/entry-point.sh
 
-RUN /usr/local/bin/python -m pip install --upgrade pip \
-&&  /usr/local/bin/python -m pip install matplotlib ipython jupyterlab \
-&& source /opt/root/bin/thisroot.sh && /usr/local/bin/python -m pip install root_numpy
+RUN /usr/local/bin/python -m pip install --no-cache --upgrade setuptools pip \
+&&  /usr/local/bin/python -m pip install --no-cache \
+matplotlib \
+ipython \
+jupyterlab \
+pydot \
+&& source /opt/root/bin/thisroot.sh && /usr/local/bin/python -m pip install --no-cache root_numpy
 
 ENTRYPOINT ["/opt/entry-point.sh"]
 CMD ["/bin/bash"]
