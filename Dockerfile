@@ -2,7 +2,7 @@
 # FROM nvcr.io/nvidia/tensorflow:20.03-tf2-py3 as builder
 # FROM tensorflow/tensorflow:2.2.0-gpu as builder
 # FROM tensorflow/tensorflow:2.3.0-gpu as builder
-ARG BASE_IMAGE=tensorflow/tensorflow:2.3.0-gpu
+ARG BASE_IMAGE=tensorflow/tensorflow:2.3.1-gpu
 FROM $BASE_IMAGE AS builder
 
 WORKDIR /workspace
@@ -18,12 +18,15 @@ apt-get -yq --no-install-recommends install \
 git \
 $(cat packages) \
 && apt-get clean \
+&& rm -rf /var/cache/apt/archives/* \
 && rm -rf /var/lib/apt/lists/*
 
 RUN git clone --branch v6-22-00-patches https://github.com/root-project/root.git root_src \
 && mkdir root_build root && cd root_build \
 && cmake -Dpython3="ON" -DPYTHON_EXECUTABLE="/usr/local/bin/python" -Dlibcxx="ON" -Dmathmore="ON" -Dminuit2="ON" -Droofit="ON" -Dtmva="ON" -DCMAKE_INSTALL_PREFIX=../root ../root_src \
-&& cmake --build . -- install -j `nproc` 
+# && cmake --build . -- install -j `nproc`
+&& make -j`nproc` \
+&& make install
 
 # ARG ROOT_BIN=root_v6.22.00.Linux-ubuntu18-x86_64-gcc7.5.tar.gz
 # RUN wget https://root.cern/download/${ROOT_BIN} \
@@ -60,10 +63,12 @@ RUN apt-get update && \
 apt-get -yq --no-install-recommends install \
 git \
 emacs-nox \
+less \
 wget \
 python3-pygraphviz \
 $(cat packages) \
 && apt-get clean \
+&& rm -rf /var/cache/apt/archives/* \
 && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /workspace/root /opt/root
@@ -77,6 +82,7 @@ matplotlib \
 ipython \
 jupyterlab \
 pydot \
+sklearn \
 && source /opt/root/bin/thisroot.sh && /usr/local/bin/python -m pip install --no-cache root_numpy
 
 ENTRYPOINT ["/opt/entry-point.sh"]
