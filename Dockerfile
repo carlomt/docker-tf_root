@@ -2,7 +2,7 @@
 # FROM nvcr.io/nvidia/tensorflow:20.03-tf2-py3 as builder
 # FROM tensorflow/tensorflow:2.2.0-gpu as builder
 # FROM tensorflow/tensorflow:2.3.0-gpu as builder
-ARG BASE_IMAGE=tensorflow/tensorflow:2.3.1-gpu
+ARG BASE_IMAGE=tensorflow/tensorflow:2.4.0-gpu
 FROM $BASE_IMAGE AS builder
 
 WORKDIR /workspace
@@ -83,6 +83,8 @@ ipython \
 jupyterlab \
 pydot \
 sklearn \
+onnx \
+keras2onnx \
 && source /opt/root/bin/thisroot.sh && /usr/local/bin/python -m pip install --no-cache root_numpy
 
 ENTRYPOINT ["/opt/entry-point.sh"]
