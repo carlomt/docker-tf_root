@@ -83,8 +83,10 @@ ipython \
 jupyterlab \
 pydot \
 sklearn \
+scikit-image \
 onnx \
 keras2onnx \
+tensorflow_probability \
 && source /opt/root/bin/thisroot.sh && /usr/local/bin/python -m pip install --no-cache root_numpy
 
 ENTRYPOINT ["/opt/entry-point.sh"]
